@@ -44,6 +44,7 @@ BeanFactory beanFactory = new BeanFactory();
         source.call();*/
 
 
+ВЕТКА main
 
 1.3 Spring Context:
 - Настройка бинов через Java-конфигурацию;
@@ -196,7 +197,7 @@ Caused by: org.springframework.beans.factory.NoUniqueBeanDefinitionException: No
 приложения.
 
 ******************************************************
-
+ВЕТКА 1.4_Bean_Scopes
 1.4 Bean Scopes
 Виды скоупов
 Скоупы бинов на практике
@@ -250,4 +251,92 @@ ObjectFactory
 session и другие
 ● позволяют оптимизировать использование ресурсов
 и управлять состоянием бинов в различных ситуациях
+
+1. AppConfig - создали новый класс, создали в нем @ComponentScan("org.example")
+2. Создадим класс FirstSingleton, @Scope("singleton")
+ - добавим свойство instant которое будет выводить время создания
+3. Создадим класс PrototypeComponent
+4. в МАИН проверям работу бинов:
+// запрашиваем БИНЫ:
+        FirstSingelton firstSingelton1 = context.getBean(FirstSingelton.class);
+        FirstSingelton firstSingelton2 = context.getBean(FirstSingelton.class);
+
+        //сравнение экземпляров (== ссылочное сравнение):
+        System.out.println(firstSingelton1  == firstSingelton2); //эти объекты равны по ссылочному типу
+это значит , что СПРИНГОВЫЙ контекст создал экземпляр данного бина FirstSingelton и отдавал его по запросу.
+5. создадим новый класс SecondSingleton, укажем только анннотацию Контекст, т.к. СИНГЕЛТОНЯ является СКОУПОМ по умолчанию @Scope("singleton")
+   // подключим PrototypeComponent в этот БИН как свойство:
+        //выведем printCreatedTime() у PrototypeComponent
+6. перед тем как исп-ть SecondSingleton , посмотрим как работает ПрототипКомпонент если запросить его несколько раз
+ PrototypeComponent prototypeComponent1 = context.getBean(PrototypeComponent.class);
+        PrototypeComponent prototypeComponent2 = context.getBean(PrototypeComponent.class);
+        System.out.println(prototypeComponent1  == prototypeComponent2);
+    тут видно что PrototypeComponent создавался несколько раз, объекты по ссылке не равны => данные объекты разные
+    они создавались каждый раз , когда мы вызывали метод getBean.
+код:
+  FirstSingleton firstSingelton1 = context.getBean(FirstSingleton.class);
+        FirstSingleton firstSingelton2 = context.getBean(FirstSingleton.class);
+
+        System.out.println(firstSingelton1  == firstSingelton2);
+
+        PrototypeComponent prototypeComponent1 = context.getBean(PrototypeComponent.class);
+        PrototypeComponent prototypeComponent2 = context.getBean(PrototypeComponent.class);
+        System.out.println(prototypeComponent1  == prototypeComponent2);
+
+        SecondSingleton secondSingleton1 = context.getBean(SecondSingleton.class);
+        SecondSingleton secondSingleton2 = context.getBean(SecondSingleton.class);
+        System.out.println(secondSingleton1  == secondSingleton2);
+результат:
+    > Task :Main.main()
+    FirstSingleton created
+    FirstSingleton created at : 2024-02-05T19:25:59.993863100Z
+    PrototypeComponent created
+    PrototypeComponent created at : 2024-02-05T19:26:00.013863400Z
+    SecondSingleton created
+    SecondSingleton created at : 2024-02-05T19:26:00.016864800Z
+    PrototypeComponent created at : 2024-02-05T19:26:00.013863400Z
+    true
+    PrototypeComponent created
+    PrototypeComponent created at : 2024-02-05T19:26:00.046864200Z
+    PrototypeComponent created
+    PrototypeComponent created at : 2024-02-05T19:26:00.046864200Z
+    false
+    true
+
+    видно что ФёстКомпонент создался 1 раз, ПрототипКомпонет создавался каждый раз при его запросе, СекондСингелТон ссылочно равен, т.е. это один объект
+
+  7. создадим класс ОБДЖЕКТфакторХолдер
+  в нем создадим конструктор котрый будет внедрять нашу зависимость ObjectFactory
+
+  -можно указать аннотацию Аутоваредед, чтобы внедрить зависимости ObjectFactory, а можно не указывать , т.к. спринг увидит конструктор ObjectFactoryHolder и сипользует его для внедрения
+            ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+    ObjectFactoryHolder factoryHolder = context.getBean(ObjectFactoryHolder.class);
+
+          System.out.println(factoryHolder.getPrototype() == factoryHolder.getPrototype()); ФАЛС
+          System.out.println(factoryHolder.getSingleton() == factoryHolder.getSingleton()); ТРУ
+
+          ПРОТОТАЙП КОМПОНЕНТЫ СОЗДАЮТ РАЗНЫЕ ОБЪЕКТЫ ПРИ КАЖДОМ ЗАПРОСЕ
+          getSingleton ТРУ Т.К. БИНЫ СО СКОБОМ СИНГЛТОН СОЗДАЮТСЯ 1 РАЗ.
+          БИНЫ МОГУТ СОЗД-СФ НЕ ТОЛЬКО ПРИ ИНИЦ-ИИ КОНТЕКСТА, СУЩЕСТВУЕТ АННОТАЦИЯ ЛЕЗИ, КОТОРАЯ СОЗДАЕТ БИН ПРИ ЕГО ИСПОЛЬЗОВАНИИ
+    8. LAZY УСТАНОВИМ НА КЛАСС СЕКОНД-СИНГЛ-ТОН
+
+    code^
+     ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+           System.out.println("MAIN method was called");
+
+           result:
+FirstSingleton created
+FirstSingleton created at : 2024-02-05T19:54:32.365717100Z
+MAIN method was called
+ - создался только ФерстСинглТон, не создался ПРОТОТАЙП компонент т,к, он исп-ся по запросу СекондСингедТон
+ - добавим context.getBean(SecondSingleton.class);
+> Task :Main.main()
+FirstSingleton created
+FirstSingleton created at : 2024-02-05T19:58:50.631053300Z
+MAIN method was called
+PrototypeComponent created
+PrototypeComponent created at : 2024-02-05T19:58:50.682046600Z
+SecondSingleton created
+SecondSingleton created at : 2024-02-05T19:58:50.684045500Z
+PrototypeComponent created at : 2024-02-05T19:58:50.682046600Z
 
