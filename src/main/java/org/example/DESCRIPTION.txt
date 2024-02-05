@@ -31,13 +31,162 @@ BeanFactory beanFactory = new BeanFactory();
         //вывод на консоль:
         source.call(); с помощью метода колл вызвали метод инжект дуВорк
 
+/** БИНЫ:
+
+BeanFactory beanFactory = new BeanFactory();
+//регистрируем бины:
+    beanFactory.register(Injectable.class);
+    beanFactory.register(Source.class);
+
+        //получим бин соурс:
+        Source source = beanFactory.getBean(Source.class);
+        //вывод на консоль:
+        source.call();*/
+
+
+
 1.3 Spring Context:
 - Настройка бинов через Java-конфигурацию;
 - Работа с контекстом Spring;
 - Настройка бинов через Java-аннотации.
 
+1. Подключаем зависимость:
+ - build.gradle.kts :
 
+dependencies {
+      implementation("org.springframework:spring-context:6.0.8")
+}
 
+2. создадим класс LogicClass
+ - будет выводить в консоль сообщение при его создании.
+ - будет метод симплЛоджик, будет выводить сообщение.
+
+3.зарегестрируем класс LogicClass в СПРИНГОВОМ контексте, для этого
+   создадим класс AppConfig
+   - создадим аннотацию БИН, напишем метод который будет выполнять ЛоджикКласс и назовем его лоджикКласс
+   @Bean //отвечает за внесения возвращаемого значения в контексте СПРИНГА
+    public LogicClass simpleLogicClass() //название класса это имя данного бина которое будет храниться как ключ по которому мы сможем получить созданный бин
+ - реализуем в майн через апликейшен контекст:
+         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class); //должны передать сюда  АПП конфиг Класс, в котором лежат бины
+он реализует интерфейс АПЛИКЕЙШЕН КОНТЕКСТ, а  АПЛИКЕЙШЕН КОНТЕКСТ в свою очередь БИНФЭКТОРИ ( ListableBeanFactory - основная фабрика бинов в спринг который является базовым интерфейсом для любых контейнеров)
+4. получаем БИН по типу:
+LogicClass logicClass = context.getBean(LogicClass.class);
+//вызовем у бина СИМПЛЛоджик:
+        logicClass.simpleLogic();
+
+ - При инициализации бина вызвался конструктор и на консоли вывод: LogicClass was initialize, и после СИМПЛЛОДЖИК : Simple class logic
+5. Добавим несколько полей (наме и код) в ЛоджикКласс и конструктор для этих полей
+6. Добавим метод принтЛоджикДата, перед тем как изменять наш код ВЫЗОВЕМ у нашего БИНА лоджикКласс ПРИНТЛОДЖИКДАТА (в майн)
+Результат: Simple LogicData : null, 0  (Simple LogicData  вывел налл для стринга и 0 для ИНТового значения)
+7. Добавим новый бин в котором поля будут заданы:
+ - в класс АППконфиг добавим новый метод (лоджиткклассдата) с аннотацией БИН:
+   @Bean
+     public LogicClass logicClassData(){
+     return new LogicClass("Logic class data", 42);
+     }
+     произошла ошибка (спринг не смог получить бин по типу лоджик класс , т.к. доступно таких бина 2), чтобы исправить то в ГЕТбин (в майн) нужно первым параметром указать название бина (в данном случае - название метода, который помечен аннотацией БИН), т.е для бина без полей это СИМПЛЛоджикКласс:
+            LogicClass logicClass = context.getBean("simpleLogicClass",LogicClass.class);
+передадим logicClassData как имя бина:
+       LogicClass logicClass = context.getBean("logicClassData",LogicClass.class); Результат: Simple LogicData : Logic class data, 42
+
+****** ВТОРОЙ ВАРИАНТ НАСТРОЙКИ БИНОВ через аннотации:  **********
+8.  создадим новый класс DataComponent (добавили конструктор и метод сомеВорк), добавляем его в контекст спринга: аннотация @Component
+(с помощью аннотации из пакета stereotype мы говорим контексту, что хотим видеть в контейнере бинов, бин данного класса)
+ -чтобы спринг понимал что ему нужно добавить этот бин , одной аннотации компонент будет мало,
+
+- переходим в АппКонфиг указываем аннотацию @ComponentScan("org.example") , данная аннотация сканирует все классы которые находятся в "org.example", после сканирования класса, если спринг видит что у компонента есть аннотация КОМПОНЕНТ(как пример) он регистрирует этот класс в контексте БИНОВ.
+ТЕПЕРЬ МОЖЕМ ПОЛУЧИТЬ НОВЫЙ БИН ИЗ НАШЕГО КОНТЕКСТА.
+- метод генБин не единственный способ получения бинов
+***РАБОТА С КОНТЕКСТОМ СПРИНГА НАПРЯМУЮ ЯВЛЯЕТСЯ АНТИПАТЕРНОМ
+9. Создадим класс Worker, который будет использовать бины в одном методе, а сам ВОРКЕР будем получать методом гетБин
+-пометим его аннотацией КОМПОНЕНТ
+- используем аннотацию АВТОВАЕРед будет отвечать за инжект бинов (АВТОВАЕРед по сути делает тоже самое что и ИНЖЕКТ, который мы реализовали ранее)
+
+УДАЛИЛИ:
+     LogicClass logicClass = context.getBean("logicClassData",LogicClass.class);
+        logicClass.simpleLogic();
+logicClass.printLogicData();
+context.getBean(DataComponent.class).someWork();
+
+- возьмем из контекста ВОРКер.класс колл:
+        context.getBean(Worker.class).call();
+Ошибка:
+Caused by: org.springframework.beans.factory.NoUniqueBeanDefinitionException: No qualifying bean of type 'org.example.LogicClass' available: expected single matching bean but found 2: simpleLogicClass,logicClassData
+Он не понимает, какой биин надо вставлять из контекста, исправим это с помощью аннотации Qualifier в классе ВОРКЕР:
+@Qualifier говорит какой бин мы хотим вытащить из контекста и заинжектить в поле @Qualifier("")
+
+@Autowired
+@Qualifier("simpleLogicClass")
+    private LogicClass simpleLogic;
+@Autowired
+@Qualifier("logicClassData")
+    private LogicClass dataSimpleLogic;
+------------------------------------------------
+Данные выводятся, и выводятся при помощи одного бина ВОРКЕР!
+** Инъекция по полю через аннотацию АВТОВАЕРЕД - не лучший вариант , СУЩЕСТВКЕТ НЕСКОЛЬКО ВАРИАНТОВ ИНЪЕКЦИИ ЗАВИСИМОСТЕЙ:
+- ЧЕРЕЗ МЕТОД, ЕСЛИ АННОТАЦИЯ АВТОВАРИЕД ПРИМЕНЯЕТСЯ К МЕТОДАМ С ПАРАМЕТРАМИ, СПРИНГ БУДЕТ ВЫЗЫВАТЬ ЭТОТ МЕТОД ПОСЛЕ СОЗДАНИЯ ЭКЗЕМПЛЯРА БИНА.
+пРИМЕР:
+Уе6eрем у датаКомпонет автовариед, создадим метод СЕТ_ДАТА_КОМПОНЕНТ (Worker)
+   @Autowired
+    public void setDataComponent(DataComponent dataComponent) {
+        this.dataComponent = dataComponent;
+    }
+------------------------
+- ЧЕРЕЗ КОНСТРУКТОР (Worker):
+Если  @Autowired применяется к конструктору, СПРИНГ будет использовать этот конструктор для создания экземпляра бина
+и авт-ки делать инъекцию всех необх-ых зависимостей через параметры этого конструктора.
+удалим аннотации и метод предыдущий, сделаем поля final.
+БЫЛО:
+package org.example;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+@Component
+public class Worker {
+@Autowired
+@Qualifier("simpleLogicClass")
+    private LogicClass simpleLogic;
+@Autowired
+@Qualifier("logicClassData")
+    private LogicClass dataSimpleLogic;
+//заинжектим датаКомпонент:
+//    @Autowired
+
+    private DataComponent dataComponent;
+
+    @Autowired
+    public void setDataComponent(DataComponent dataComponent) {
+        this.dataComponent = dataComponent;
+    }
+
+    public void call(){
+        simpleLogic.simpleLogic();
+        dataSimpleLogic.printLogicData();
+        dataComponent.someWork();
+    }
+
+}
+СТАЛО:
+  private final LogicClass simpleLogic;
+
+    private final LogicClass dataSimpleLogic;
+    private final DataComponent dataComponent;
+
+    @Autowired
+        public Worker(LogicClass simpleLogic, LogicClass dataSimpleLogic, DataComponent dataComponent) {
+        this.simpleLogic = simpleLogic;
+        this.dataSimpleLogic = dataSimpleLogic;
+        this.dataComponent = dataComponent;
+    }
+Ошибка:
+Caused by: org.springframework.beans.factory.NoUniqueBeanDefinitionException: No qualifying bean of type 'org.example.LogicClass' available: expected single matching bean but found 2: simpleLogicClass,logicClassData
+Решение: НУЖНО ИСПОЛЬЗОВАТЬ АННОТАЦИЮ КОЛИФАЕР (не обязательно)
+МОЖЕМ ИСПОЛЬЗОВАТЬ ИМЕНА БИНОВ из АппКонфиг (simpleLogicClass, logicClassData ) и для датаКомпонент названия бина остается без изменений, т.к. при настройке бинов через аннотации, название класса = название бина)
+*** ИНЪЕКЦИЯ ЧЕРЕЗ КОНСТРУКТОР НАИБОЛЕЕ ПРЕДПОЧТИТЕЛЬНА С ТОЧКИ ЗРЕНИЯ jAVA КОДА :
+- КОД ЛЕГЧЕ ТЕСТИРУЕТСЯ;
+- БИНЫ МОЖНО ЗАМЕНИТЬ МОКОВЫМИ РЕАЛИЗАЦИЯМИ;
+- СРАЗУ ПРОСТАВИМ НУЖНЫЕ БИНЫ И НЕ СМОЖЕМ ЗАБЫТЬ О КАКИХ-ЛИБО ВЛОЖЕНЫХ ПРИ ИНИЦИАЛИЗАЦИИ.
 Вывод:
 Вы познакомились с базовыми принципами
 инициализации бинов с помощью Spring.

@@ -1,18 +1,18 @@
 package org.example;
 
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) {
-BeanFactory beanFactory = new BeanFactory();
-//регистрируем бины:
-    beanFactory.register(Injectable.class);
-    beanFactory.register(Source.class);
+     //   1.3 Spring Context:
+        ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class); //должны передать сюда  АПП конфиг Класс, в котором лежат бины
 
-        //получим бин соурс:
-        Source source = beanFactory.getBean(Source.class);
-        //вывод на консоль:
-        source.call();
+        context.getBean(Worker.class).call();
+
+
 
     }
     }
