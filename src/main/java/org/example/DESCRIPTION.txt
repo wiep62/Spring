@@ -354,3 +354,28 @@ PrototypeComponent created at : 2024-02-05T19:58:50.682046600Z
  - завершение жизненного цикла бина (происходит вызов методов котороые помечены как методы вызова перед уничтожением бина)
  - удаление бина из контекста.
  остановимся на шаге 6 и 9 !
+
+-----------------
+в ГРАДЛ добавляем implementation("javax.annotation:javax.annotation-api:1.3.2")
+2. создадим класс SimpleBean
+3. Создадим AppConfig
+4. в МАИН с помощью context.getBean(SimpleBean.class); получаем 2 сообщения:
+> Task :Main.main()
+SimpleBean created  выводим в конструкторе класса SimpleBean
+SimpleBean calling afterInit выводим в методе afterInit класса SimpleBean, он помече аннотацией @PostConstruct
+и вызвался сразу после инициализации
+5. изменим скоуп нашего бина на ПРОТОТИП @Scope("prototype") и получим его несколько раз
+6. также можно использовать аннотацию как в шаге 9 (предистрой)
+- удалим @Scope("prototype") и создадим метод который
+@PreDestroy
+public void beforeDestroy(){
+    System.out.println("Simple Bean calling beforeDestroy");
+}
+7. удалим бин из контекста:
+- получим Бин фактори
+destroyBean принимает имя БИНА либо сам БИН, а затем уничтожает его:
+        ((AbstractApplicationContext)context).getBeanFactory().destroyBean(simpleBean);
+ЭТИ АННОТАЦИИ НЕ ЕДИНСТВЕННЫЙ СПОСОБ ВЫЗОВА МЕТОДОВ НА ШАГЕ 6 И 9.
+- ЕСЛИ ИСПОЛЬЗУЕМ АНН-ИЮ БИН ДЛЯ СОЗДАНИЯ БИНА ЧЕРЕЗ JAVA-КОНФ-ИЮ, ТО МОЖНО ИСПОЛЬЗОВАТЬ НАЗВАНИЕ МЕТОДОВ В
+САМОМ БИНЕ ДЛЯ УКАЗАНИЯ ПРЕДЕСТРОЙ И ПОСТКОНТРАКТ
+- УДАЛИМ АНОТАЦИЮ КОМПОНЕНТ В SIMPLEBEAN
