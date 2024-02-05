@@ -379,3 +379,48 @@ destroyBean принимает имя БИНА либо сам БИН, а зат
 - ЕСЛИ ИСПОЛЬЗУЕМ АНН-ИЮ БИН ДЛЯ СОЗДАНИЯ БИНА ЧЕРЕЗ JAVA-КОНФ-ИЮ, ТО МОЖНО ИСПОЛЬЗОВАТЬ НАЗВАНИЕ МЕТОДОВ В
 САМОМ БИНЕ ДЛЯ УКАЗАНИЯ ПРЕДЕСТРОЙ И ПОСТКОНТРАКТ
 - УДАЛИМ АНОТАЦИЮ КОМПОНЕНТ В SIMPLEBEAN
+- создадим аннотацию БИН в АппКонфиг
+
+package org.example;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+
+@ComponentScan("org.example")
+public class AppConfig {
+    @Bean(initMethod = "afterInit", destroyMethod = "beforeDestroy")
+    public SimpleBean simpleBean(){
+return new SimpleBean();
+    }
+}
+
+и передодим в дестрой имя нашего бина
+        ((AbstractApplicationContext)context).getBeanFactory().destroyBean("simpleBean", simpleBean);
+которое равно названию метода simpleBean, а так же передадим сам объект simpleBean
+ - МЕТОДЫ ВЫЗЫВАНЫ В ТОМ ЖЕ ПОРЯДКЕ В КОТОРОМ БЫЛИ ВЫЗВАННЫ ДО ЭТОГО
+
+ 8. помимо того что можем использовать аннотацию БИН     @Bean(initMethod = "afterInit", destroyMethod = "beforeDestroy")
+МЫ
+ можем использовать и другие интерфейсы которые называются InitializingBean, DisposableBean имплементируем их в СИМПлеБен
+ public class SimpleBean implements InitializingBean, DisposableBean {
+
+9. Бин может получать информацию о среде и контексте приложения через реализацию интерфейсов Aware:
+ApplicationContextAware можно получить доступ к контексту приложения,
+EnvironmentAware — к конфигурации приложения (имени бина),
+ServletContextAware — к контексту сервлета
+10. Получаем имя бина с помощью Aware интерфейса: (BeanNameAware)
+создали поле наме,   @Override
+                       public void setBeanName(String name) {
+                   this.beanName = name;
+                       }
+
+                       public void printName(){
+                       System.out.println("Bean name is : " + beanName);
+                       }
+     В БИЗНЕСС КОМПОНЕНТАХ  НЕ ИСПОЛЬЗУЮТ Aware ИНТЕРФЕЙСЫ Т.К. ЭТИ КОМПОНЕНТЫ НИЧЕГО НЕ ДОЛЖНЫ ЗНАТЬ О СВОЕМ КОНТЕКСТЕ
+
+Жизненный цикл бина в Spring определяет моменты его
+создания, инициализации, использования и уничтожения.
+Это позволяет управлять и настраивать бины в приложении,
+обеспечивая необходимую функциональность
+и ресурсоэффективность.

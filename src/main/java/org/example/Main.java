@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
        SimpleBean simpleBean = context.getBean(SimpleBean.class);
-
-        ((AbstractApplicationContext)context).getBeanFactory().destroyBean(simpleBean);
+simpleBean.printName();
+        ((AbstractApplicationContext)context).getBeanFactory().destroyBean("simpleBean", simpleBean);
     }
 }
