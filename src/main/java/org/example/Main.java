@@ -8,8 +8,6 @@ import org.springframework.context.support.AbstractApplicationContext;
 public class Main {
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-       SimpleBean simpleBean = context.getBean(SimpleBean.class);
-simpleBean.printName();
-        ((AbstractApplicationContext)context).getBeanFactory().destroyBean("simpleBean", simpleBean);
-    }
+       context.getBean(PersonInfo.class).printInfo();
+          }
 }
