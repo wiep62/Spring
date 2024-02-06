@@ -1,16 +1,20 @@
 package org.example.config;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.annotation.PropertySources;
+import org.example.EnvPrinter;
+import org.example.TestEnvPrinter;
+import org.springframework.context.annotation.*;
 
 @Configuration
 @PropertySources(
         value = {
-                @PropertySources("classpath:application-test.properties")
+                @PropertySource("classpath:application-test.properties")
         }
 )
 @Profile("test")
-
 public class TestAppConfig {
+
+        @Bean
+        public EnvPrinter envPrinter(){
+                return new TestEnvPrinter();
+        }
 }
